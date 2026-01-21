@@ -1,0 +1,352 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=Outfit:wght@200;300;600;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html, body, #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+  }
+
+  select option {
+    background: #1a3a52;
+    color: #e2e8f0;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer utilities {
+  .font-mono {
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .font-sans {
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .h-dvh {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* Bright ocean gradients */
+  .gradient-surface {
+    background: linear-gradient(
+      180deg,
+      oklch(70% 0.12 205) 0%,
+      oklch(60% 0.14 210) 50%,
+      oklch(50% 0.12 220) 100%
+    );
+  }
+
+  .gradient-shallow {
+    background: linear-gradient(
+      180deg,
+      oklch(72% 0.13 200) 0%,
+      oklch(62% 0.15 208) 50%,
+      oklch(52% 0.13 218) 100%
+    );
+  }
+
+  .gradient-mid {
+    background: linear-gradient(
+      180deg,
+      oklch(68% 0.11 210) 0%,
+      oklch(58% 0.13 218) 50%,
+      oklch(48% 0.11 228) 100%
+    );
+  }
+
+  .gradient-deep {
+    background: linear-gradient(
+      180deg,
+      oklch(65% 0.10 215) 0%,
+      oklch(55% 0.12 222) 50%,
+      oklch(45% 0.10 232) 100%
+    );
+  }
+
+  .gradient-abyss {
+    background: linear-gradient(
+      180deg,
+      oklch(62% 0.09 220) 0%,
+      oklch(52% 0.11 228) 50%,
+      oklch(42% 0.09 238) 100%
+    );
+  }
+
+  /* Glass effect - ocean tinted */
+  .glass {
+    background: linear-gradient(
+      145deg,
+      rgba(100, 140, 160, 0.25) 0%,
+      rgba(70, 110, 130, 0.15) 100%
+    );
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(150, 180, 200, 0.2);
+    border-radius: 20px;
+    box-shadow:
+      0 4px 24px rgba(0, 40, 60, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-strong {
+    background: linear-gradient(
+      145deg,
+      rgba(90, 130, 150, 0.35) 0%,
+      rgba(60, 100, 120, 0.2) 100%
+    );
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(140, 175, 195, 0.25);
+    border-radius: 24px;
+    box-shadow:
+      0 8px 32px rgba(0, 40, 60, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  /* Card variations for visual distinction */
+  .card-teal {
+    background: linear-gradient(
+      145deg,
+      rgba(80, 140, 140, 0.3) 0%,
+      rgba(50, 100, 100, 0.15) 100%
+    );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(100, 160, 160, 0.2);
+    border-radius: 20px;
+  }
+
+  .card-slate {
+    background: linear-gradient(
+      145deg,
+      rgba(100, 116, 139, 0.3) 0%,
+      rgba(71, 85, 105, 0.15) 100%
+    );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 20px;
+  }
+
+  .card-ocean {
+    background: linear-gradient(
+      145deg,
+      rgba(56, 120, 150, 0.3) 0%,
+      rgba(30, 80, 110, 0.15) 100%
+    );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(100, 160, 190, 0.2);
+    border-radius: 20px;
+  }
+
+  /* Soft button style */
+  .btn-soft {
+    border-radius: 16px;
+    box-shadow:
+      0 4px 16px rgba(0, 40, 60, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transition: all 0.2s ease;
+  }
+
+  .btn-soft:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(0, 40, 60, 0.15);
+  }
+
+  /* Input soft style */
+  .input-soft {
+    border-radius: 14px;
+    border: 1px solid rgba(100, 140, 160, 0.2);
+    background: rgba(80, 120, 140, 0.15);
+    transition: all 0.2s ease;
+  }
+
+  .input-soft:focus {
+    border-color: rgba(100, 160, 180, 0.4);
+    background: rgba(80, 130, 150, 0.2);
+  }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Swimming fish animations - smooth wave motion */
+  @keyframes swimRight {
+    0% {
+      transform: translateX(-80px) translateY(0px);
+      opacity: 0;
+    }
+    5% {
+      opacity: 0.8;
+    }
+    25% {
+      transform: translateX(25vw) translateY(-15px);
+    }
+    50% {
+      transform: translateX(50vw) translateY(10px);
+    }
+    75% {
+      transform: translateX(75vw) translateY(-10px);
+    }
+    95% {
+      opacity: 0.8;
+    }
+    100% {
+      transform: translateX(calc(100vw + 80px)) translateY(5px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes swimLeft {
+    0% {
+      transform: translateX(calc(100vw + 80px)) translateY(0px);
+      opacity: 0;
+    }
+    5% {
+      opacity: 0.7;
+    }
+    25% {
+      transform: translateX(75vw) translateY(12px);
+    }
+    50% {
+      transform: translateX(50vw) translateY(-8px);
+    }
+    75% {
+      transform: translateX(25vw) translateY(15px);
+    }
+    95% {
+      opacity: 0.7;
+    }
+    100% {
+      transform: translateX(-80px) translateY(-5px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes swimSlow {
+    0% {
+      transform: translateX(-60px) translateY(0px);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.5;
+    }
+    50% {
+      transform: translateX(50vw) translateY(-25px);
+    }
+    90% {
+      opacity: 0.5;
+    }
+    100% {
+      transform: translateX(calc(100vw + 60px)) translateY(15px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes bubble {
+    0% {
+      transform: translateY(0) scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: translateY(-50vh) scale(1.2);
+      opacity: 0.3;
+    }
+    100% {
+      transform: translateY(-100vh) scale(0.8);
+      opacity: 0;
+    }
+  }
+
+  .animate-swimRight {
+    animation: swimRight 12s ease-in-out infinite;
+  }
+
+  .animate-swimLeft {
+    animation: swimLeft 15s ease-in-out infinite;
+  }
+
+  .animate-swimSlow {
+    animation: swimSlow 20s ease-in-out infinite;
+  }
+
+  .animate-bubble {
+    animation: bubble 8s ease-in-out infinite;
+  }
+
+  .animate-fadeUp {
+    animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-scaleIn {
+    animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .duration-400 {
+    transition-duration: 400ms;
+  }
+
+  /* Text gradient - brighter */
+  .text-gradient {
+    background: linear-gradient(
+      135deg,
+      oklch(95% 0.15 190) 0%,
+      oklch(85% 0.18 210) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
