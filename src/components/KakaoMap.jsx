@@ -53,7 +53,7 @@ export default function KakaoMap({ userLocation, defaultCenter, onMapReady }) {
 
     const options = {
       center: new window.kakao.maps.LatLng(initialCenter.lat, initialCenter.lng),
-      level: 7
+      level: 13  // 전국이 보이는 줌 레벨
     }
 
     try {
@@ -76,9 +76,12 @@ export default function KakaoMap({ userLocation, defaultCenter, onMapReady }) {
 
   // 낚시 금지/제한 구역 로드
   const loadFishingZones = (map) => {
+    console.log('낚시구역 로드 시작, 총 구역 수:', fishingZones.length)
     fishingZones.forEach((zone) => {
+      console.log('폴리곤 생성:', zone.name, zone.type)
       createPolygon(map, zone)
     })
+    console.log('낚시구역 로드 완료')
   }
 
   // 폴리곤 생성
