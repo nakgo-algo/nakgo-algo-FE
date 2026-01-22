@@ -60,25 +60,17 @@ export default function App() {
 
   return (
     <div className="h-dvh flex flex-col overflow-hidden relative">
-      {/* Swimming Fish Background */}
-      <SwimmingFish />
+      {/* Swimming Fish Background (지도 페이지 제외) */}
+      {currentPage !== "map" && <SwimmingFish />}
 
       {/* Header */}
-      <header className="absolute top-0 left-0 right-0 z-50 px-5 pt-[env(safe-area-inset-top)] h-14 flex items-center justify-between">
+      <header className="absolute top-0 left-0 right-0 z-50 px-5 pt-[env(safe-area-inset-top)] h-14 flex items-center">
         <div className="flex flex-col leading-none">
           <span className="font-sans text-[17px] font-semibold tracking-[0.06em] text-white/90">
             낚고
           </span>
           <span className="font-sans text-[17px] font-light tracking-[0.1em] text-white/50">
             알고
-          </span>
-        </div>
-        <div className="glass px-3 py-1.5">
-          <span className="font-mono text-[9px] font-medium text-cyan-300/80">
-            {locationStatus === "active" && "위치 ON"}
-            {locationStatus === "limited" && "위치 제한"}
-            {locationStatus === "inactive" && "위치 OFF"}
-            {locationStatus === "pending" && "대기중"}
           </span>
         </div>
       </header>
