@@ -5,7 +5,7 @@ import useUserLocation from '../hooks/useUserLocation'
 // 모바일 접속 QR 코드 컴포넌트
 function MobileQRCode() {
   const [showQR, setShowQR] = useState(false)
-  const networkUrl = 'http://192.168.1.25:3000'
+  const networkUrl = 'http://192.168.1.19:3000'
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(networkUrl)}`
 
   return (

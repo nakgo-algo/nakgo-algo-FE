@@ -1,61 +1,47 @@
 import { useState, useRef } from 'react'
 
-// Gemini API 키 (환경변수에서 가져오기)
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || ''
+// Hugging Face API 토큰 (환경변수에서 가져오기)
+const HF_TOKEN = import.meta.env.VITE_HF_TOKEN || ''
 
 // 한국 주요 낚시 대상어종 + 규제 정보 (수산자원관리법 기준)
 const koreanFishRegulations = {
-  '광어': { minLength: 35, closedSeason: null, warning: null, description: '대표적인 고급 횟감' },
-  '넙치': { minLength: 35, closedSeason: null, warning: null, description: '광어의 정식 명칭' },
-  '우럭': { minLength: 23, closedSeason: '4월 1일 ~ 5월 31일', warning: null, description: '볼락류 중 가장 대형' },
-  '조피볼락': { minLength: 23, closedSeason: '4월 1일 ~ 5월 31일', warning: null, description: '우럭의 정식 명칭' },
-  '농어': { minLength: 30, closedSeason: null, warning: null, description: '회유성 어종' },
-  '감성돔': { minLength: 25, closedSeason: '5월 1일 ~ 6월 30일', warning: null, description: '낚시인 인기 대상어' },
-  '참돔': { minLength: 24, closedSeason: null, warning: null, description: '고급 어종, 타이라바 인기' },
-  '대구': { minLength: 35, closedSeason: '1월 16일 ~ 2월 15일', warning: null, description: '겨울철 대표 어종' },
-  '방어': { minLength: 40, closedSeason: null, warning: null, description: '겨울철 최고급 횟감' },
-  '부시리': { minLength: 40, closedSeason: null, warning: null, description: '여름에 맛있음' },
-  '고등어': { minLength: 21, closedSeason: null, warning: null, description: '등푸른 생선 대표' },
-  '삼치': { minLength: 35, closedSeason: null, warning: null, description: '가을철 대표 낚시어' },
-  '전갱이': { minLength: 15, closedSeason: null, warning: null, description: '방파제 낚시 인기' },
-  '볼락': { minLength: 15, closedSeason: '4월 1일 ~ 5월 31일', warning: null, description: '야간 낚시 인기' },
-  '숭어': { minLength: 25, closedSeason: null, warning: null, description: '겨울 회가 맛있음' },
-  '민어': { minLength: 30, closedSeason: '7월 1일 ~ 7월 31일', warning: null, description: '여름 보양식' },
-  '조기': { minLength: 15, closedSeason: null, warning: null, description: '명절 제사상 생선' },
-  '노래미': { minLength: 15, closedSeason: null, warning: null, description: '연안 루어낚시 대상' },
-  '갈치': { minLength: null, closedSeason: null, warning: '날카로운 이빨 주의', description: '은빛 긴 몸체' },
-  '복어': { minLength: null, closedSeason: null, warning: '맹독 주의! 전문 조리사만 조리 가능', description: '독성 어종' },
-  '쏨뱅이': { minLength: null, closedSeason: null, warning: '등지느러미 독침 주의!', description: '암초 서식' },
-  '쏠배감펭': { minLength: null, closedSeason: null, warning: '독침 주의! 찔리면 심한 통증', description: '화려한 지느러미' },
-  '가오리': { minLength: null, closedSeason: null, warning: '꼬리 독침 주의!', description: '납작한 몸체' },
-  '홍어': { minLength: null, closedSeason: null, warning: null, description: '삭힌 홍어로 유명' },
-  '아귀': { minLength: null, closedSeason: null, warning: null, description: '아귀찜으로 유명' },
-  '배스': { minLength: null, closedSeason: null, warning: '생태계교란종! 방류 금지', description: '민물 포식자' },
-  '블루길': { minLength: null, closedSeason: null, warning: '생태계교란종! 방류 금지', description: '민물 외래종' },
-  '붕어': { minLength: null, closedSeason: null, warning: null, description: '민물낚시 대표' },
-  '잉어': { minLength: null, closedSeason: null, warning: null, description: '대형 민물고기' },
-  '메기': { minLength: null, closedSeason: null, warning: null, description: '야행성 민물고기' },
-  '장어': { minLength: null, closedSeason: null, warning: null, description: '보양식 인기' },
-  '연어': { minLength: 40, closedSeason: '10월~11월 (산란기)', warning: null, description: '회유성 어종' },
-  '송어': { minLength: null, closedSeason: null, warning: null, description: '냉수 민물고기' },
-  '향어': { minLength: null, closedSeason: null, warning: null, description: '낚시터 인기어종' },
-  '쥐노래미': { minLength: null, closedSeason: null, warning: null, description: '연안 서식' },
-  '돌돔': { minLength: 24, closedSeason: null, warning: null, description: '바위틈 서식, 고급어종' },
-  '벵에돔': { minLength: null, closedSeason: null, warning: null, description: '갯바위 낚시 인기' },
-  '참치': { minLength: null, closedSeason: null, warning: null, description: '대형 회유어종' },
-  '문어': { minLength: null, closedSeason: null, warning: null, description: '연체동물, 문어낚시 인기' },
-  '주꾸미': { minLength: null, closedSeason: null, warning: null, description: '가을철 별미' },
-  '오징어': { minLength: null, closedSeason: null, warning: null, description: '에깅 낚시 인기' },
-  '한치': { minLength: null, closedSeason: null, warning: null, description: '제주 특산' },
-  '꽃게': { minLength: null, closedSeason: '6월~8월 (산란기)', warning: null, description: '게장으로 유명' },
-  '대게': { minLength: null, closedSeason: null, warning: null, description: '겨울철 별미' },
+  '광어': { minLength: 35, closedSeason: null, warning: null, description: '대표적인 고급 횟감', keywords: ['flatfish', 'flounder', 'halibut'] },
+  '넙치': { minLength: 35, closedSeason: null, warning: null, description: '광어의 정식 명칭', keywords: ['flatfish', 'flounder'] },
+  '우럭': { minLength: 23, closedSeason: '4월 1일 ~ 5월 31일', warning: null, description: '볼락류 중 가장 대형', keywords: ['rockfish', 'black rockfish', 'sebastes'] },
+  '농어': { minLength: 30, closedSeason: null, warning: null, description: '회유성 어종', keywords: ['sea bass', 'bass', 'perch'] },
+  '감성돔': { minLength: 25, closedSeason: '5월 1일 ~ 6월 30일', warning: null, description: '낚시인 인기 대상어', keywords: ['black porgy', 'sea bream', 'porgy'] },
+  '참돔': { minLength: 24, closedSeason: null, warning: null, description: '고급 어종, 타이라바 인기', keywords: ['red sea bream', 'snapper', 'tai'] },
+  '대구': { minLength: 35, closedSeason: '1월 16일 ~ 2월 15일', warning: null, description: '겨울철 대표 어종', keywords: ['cod', 'pacific cod'] },
+  '방어': { minLength: 40, closedSeason: null, warning: null, description: '겨울철 최고급 횟감', keywords: ['yellowtail', 'amberjack', 'buri'] },
+  '고등어': { minLength: 21, closedSeason: null, warning: null, description: '등푸른 생선 대표', keywords: ['mackerel', 'scomber'] },
+  '삼치': { minLength: 35, closedSeason: null, warning: null, description: '가을철 대표 낚시어', keywords: ['spanish mackerel', 'sawara'] },
+  '전갱이': { minLength: 15, closedSeason: null, warning: null, description: '방파제 낚시 인기', keywords: ['horse mackerel', 'jack mackerel', 'aji'] },
+  '볼락': { minLength: 15, closedSeason: '4월 1일 ~ 5월 31일', warning: null, description: '야간 낚시 인기', keywords: ['rockfish', 'sebastes'] },
+  '숭어': { minLength: 25, closedSeason: null, warning: null, description: '겨울 회가 맛있음', keywords: ['mullet', 'grey mullet'] },
+  '갈치': { minLength: null, closedSeason: null, warning: '날카로운 이빨 주의', description: '은빛 긴 몸체', keywords: ['cutlassfish', 'hairtail', 'ribbonfish'] },
+  '복어': { minLength: null, closedSeason: null, warning: '맹독 주의! 전문 조리사만 조리 가능', description: '독성 어종', keywords: ['puffer', 'fugu', 'blowfish'] },
+  '가오리': { minLength: null, closedSeason: null, warning: '꼬리 독침 주의!', description: '납작한 몸체', keywords: ['ray', 'stingray', 'skate'] },
+  '배스': { minLength: null, closedSeason: null, warning: '생태계교란종! 방류 금지', description: '민물 포식자', keywords: ['bass', 'largemouth bass', 'black bass'] },
+  '붕어': { minLength: null, closedSeason: null, warning: null, description: '민물낚시 대표', keywords: ['crucian carp', 'carp', 'goldfish'] },
+  '잉어': { minLength: null, closedSeason: null, warning: null, description: '대형 민물고기', keywords: ['carp', 'common carp', 'koi'] },
+  '메기': { minLength: null, closedSeason: null, warning: null, description: '야행성 민물고기', keywords: ['catfish', 'silurus'] },
+  '연어': { minLength: 40, closedSeason: '10월~11월 (산란기)', warning: null, description: '회유성 어종', keywords: ['salmon', 'chum salmon', 'coho'] },
+  '송어': { minLength: null, closedSeason: null, warning: null, description: '냉수 민물고기', keywords: ['trout', 'rainbow trout'] },
+  '참치': { minLength: null, closedSeason: null, warning: null, description: '대형 회유어종', keywords: ['tuna', 'bluefin'] },
+  '오징어': { minLength: null, closedSeason: null, warning: null, description: '에깅 낚시 인기', keywords: ['squid', 'calamari'] },
+  '문어': { minLength: null, closedSeason: null, warning: null, description: '연체동물, 문어낚시 인기', keywords: ['octopus'] },
 }
+
+// 어종 목록 (수동 선택용)
+const fishList = Object.keys(koreanFishRegulations)
 
 export default function CameraPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [result, setResult] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(null)
   const [error, setError] = useState(null)
+  const [showManualSelect, setShowManualSelect] = useState(false)
+  const [imageFile, setImageFile] = useState(null)
   const fileInputRef = useRef(null)
 
   const handleUploadClick = () => {
@@ -66,107 +52,122 @@ export default function CameraPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // 이미지 미리보기
     const url = URL.createObjectURL(file)
     setPreviewUrl(url)
+    setImageFile(file)
     setIsAnalyzing(true)
     setResult(null)
     setError(null)
+    setShowManualSelect(false)
 
-    // Base64로 변환
-    const reader = new FileReader()
-    reader.onload = async (event) => {
-      const base64 = event.target.result.split(',')[1]
-      await analyzeWithGemini(base64)
-    }
-    reader.readAsDataURL(file)
+    await analyzeWithHuggingFace(file)
   }
 
-  const analyzeWithGemini = async (base64Image) => {
+  const analyzeWithHuggingFace = async (file) => {
     try {
+      // 이미지를 Blob으로 전송
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        'https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large',
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${HF_TOKEN}`,
           },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: `이 사진의 물고기 어종을 분석해주세요. 한국에서 흔히 볼 수 있는 어종명으로 알려주세요.
-
-반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요:
-{
-  "isFish": true 또는 false,
-  "name": "한국어 어종명 (예: 광어, 우럭, 농어)",
-  "nameEn": "영어 어종명",
-  "confidence": 0-100 사이 숫자,
-  "info": "크기, 특징 등 간단한 설명",
-  "habitat": "서식지"
-}
-
-물고기가 아니면 isFish를 false로 설정하세요.`
-                  },
-                  {
-                    inlineData: {
-                      mimeType: 'image/jpeg',
-                      data: base64Image
-                    }
-                  }
-                ]
-              }
-            ]
-          })
+          body: file,
         }
       )
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error?.message || `API 오류: ${response.status}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `API 오류: ${response.status}`)
       }
 
       const data = await response.json()
-      const content = data.candidates?.[0]?.content?.parts?.[0]?.text
+      const caption = data[0]?.generated_text || ''
 
-      if (!content) {
-        throw new Error('응답이 비어있습니다')
+      console.log('AI 분석 결과:', caption)
+
+      // 캡션에서 물고기 어종 매칭
+      const matchedFish = matchFishFromCaption(caption)
+
+      if (matchedFish) {
+        const regulation = koreanFishRegulations[matchedFish]
+        setResult({
+          isFish: true,
+          name: matchedFish,
+          nameEn: caption,
+          confidence: 75,
+          info: caption,
+          habitat: '해양/담수',
+          minLength: regulation?.minLength || null,
+          closedSeason: regulation?.closedSeason || null,
+          warning: regulation?.warning || null,
+          description: regulation?.description || '',
+        })
+      } else if (caption.toLowerCase().includes('fish') || caption.toLowerCase().includes('water')) {
+        // 물고기는 인식했지만 정확한 종을 모름
+        setResult({
+          isFish: true,
+          name: '물고기 (종 미확인)',
+          nameEn: caption,
+          confidence: 50,
+          info: caption,
+          habitat: '확인 필요',
+          minLength: null,
+          closedSeason: null,
+          warning: null,
+          description: '정확한 어종을 확인하려면 아래에서 직접 선택해주세요.',
+        })
+        setShowManualSelect(true)
+      } else {
+        setResult({
+          isFish: false,
+          name: '',
+          nameEn: caption,
+          confidence: 0,
+          info: caption,
+        })
       }
-
-      // JSON 파싱
-      let parsed
-      try {
-        // JSON 블록 추출
-        const jsonMatch = content.match(/\{[\s\S]*\}/)
-        if (jsonMatch) {
-          parsed = JSON.parse(jsonMatch[0])
-        } else {
-          throw new Error('JSON 형식 없음')
-        }
-      } catch (parseErr) {
-        console.error('파싱 오류:', content)
-        throw new Error('응답 파싱 실패')
-      }
-
-      // 규제 정보 추가
-      const regulation = koreanFishRegulations[parsed.name] || {}
-
-      setResult({
-        ...parsed,
-        minLength: regulation.minLength || null,
-        closedSeason: regulation.closedSeason || null,
-        warning: regulation.warning || null,
-        description: regulation.description || parsed.info
-      })
 
     } catch (err) {
-      console.error('Gemini 분석 오류:', err)
+      console.error('분석 오류:', err)
       setError(err.message || '분석 중 오류가 발생했습니다')
+      setShowManualSelect(true)
     }
 
     setIsAnalyzing(false)
+  }
+
+  const matchFishFromCaption = (caption) => {
+    const lowerCaption = caption.toLowerCase()
+
+    for (const [fishName, data] of Object.entries(koreanFishRegulations)) {
+      if (data.keywords) {
+        for (const keyword of data.keywords) {
+          if (lowerCaption.includes(keyword.toLowerCase())) {
+            return fishName
+          }
+        }
+      }
+    }
+    return null
+  }
+
+  const handleManualSelect = (fishName) => {
+    const regulation = koreanFishRegulations[fishName]
+    setResult({
+      isFish: true,
+      name: fishName,
+      nameEn: fishName,
+      confidence: 100,
+      info: '사용자 직접 선택',
+      habitat: '',
+      minLength: regulation?.minLength || null,
+      closedSeason: regulation?.closedSeason || null,
+      warning: regulation?.warning || null,
+      description: regulation?.description || '',
+    })
+    setShowManualSelect(false)
   }
 
   const getConfidenceColor = (confidence) => {
@@ -179,6 +180,8 @@ export default function CameraPage() {
     setPreviewUrl(null)
     setResult(null)
     setError(null)
+    setShowManualSelect(false)
+    setImageFile(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -200,24 +203,23 @@ export default function CameraPage() {
             AI 어종 인식
           </h1>
           <span className="font-mono text-[10px] text-white/30 tracking-widest uppercase pb-1">
-            Gemini 2.0 Flash
+            Hugging Face AI
           </span>
         </div>
         <p className="font-sans text-[12px] text-white/40 leading-relaxed">
-          물고기 사진을 업로드하면 AI가 정확하게 어종을 분석합니다
+          물고기 사진을 업로드하면 AI가 어종을 분석합니다
         </p>
       </div>
 
       {/* Upload / Preview Area */}
       <div
         onClick={!previewUrl ? handleUploadClick : undefined}
-        className={`relative z-10 rounded-2xl overflow-hidden transition-all duration-300 shrink-0 ${!previewUrl ? 'cursor-pointer active:scale-[0.98]' : ''} ${previewUrl ? 'max-h-[40vh]' : 'flex-1 min-h-0'}`}
+        className={`relative z-10 rounded-2xl overflow-hidden transition-all duration-300 shrink-0 ${!previewUrl ? 'cursor-pointer active:scale-[0.98]' : ''} ${previewUrl ? 'max-h-[35vh]' : 'flex-1 min-h-0'}`}
         style={{
           background: previewUrl ? 'transparent' : 'linear-gradient(145deg, rgba(60, 100, 120, 0.2) 0%, rgba(40, 80, 100, 0.08) 100%)',
           border: '1px solid rgba(80, 140, 160, 0.15)',
         }}
       >
-        {/* 업로드된 이미지 미리보기 */}
         {previewUrl && (
           <>
             <img
@@ -225,7 +227,6 @@ export default function CameraPage() {
               alt="분석 이미지"
               className="w-full h-full object-contain"
             />
-            {/* 다시 촬영 버튼 */}
             <button
               onClick={resetAnalysis}
               className="absolute top-3 right-3 px-3 py-1.5 rounded-lg bg-black/50 backdrop-blur-sm text-white/80 text-[12px] font-medium hover:bg-black/70 transition-colors"
@@ -249,7 +250,7 @@ export default function CameraPage() {
               </div>
             </div>
             <div className="text-center">
-              <span className="block font-sans text-[13px] text-teal-300/90 mb-1">Gemini AI 분석 중</span>
+              <span className="block font-sans text-[13px] text-teal-300/90 mb-1">AI 분석 중</span>
               <span className="font-mono text-[10px] text-white/40">Analyzing with AI...</span>
             </div>
           </div>
@@ -265,7 +266,6 @@ export default function CameraPage() {
           </div>
         ) : null}
 
-        {/* Corner accents */}
         <div className="absolute top-4 left-4 w-6 h-6 border-l-2 border-t-2 border-white/10 rounded-tl-lg" />
         <div className="absolute top-4 right-4 w-6 h-6 border-r-2 border-t-2 border-white/10 rounded-tr-lg" />
         <div className="absolute bottom-4 left-4 w-6 h-6 border-l-2 border-b-2 border-white/10 rounded-bl-lg" />
@@ -285,17 +285,30 @@ export default function CameraPage() {
       {error && (
         <div className="relative z-10 mt-5 p-4 rounded-xl bg-red-500/15 border border-red-500/30">
           <p className="font-sans text-[13px] text-red-300">{error}</p>
-          <button
-            onClick={resetAnalysis}
-            className="mt-2 text-[12px] text-red-200/70 underline"
-          >
-            다시 시도
-          </button>
+          <p className="font-sans text-[12px] text-white/50 mt-2">아래에서 어종을 직접 선택해주세요</p>
+        </div>
+      )}
+
+      {/* Manual Selection */}
+      {showManualSelect && (
+        <div className="relative z-10 mt-4 p-4 rounded-xl bg-white/5 border border-white/10">
+          <h3 className="font-sans text-[14px] font-semibold text-white/80 mb-3">어종 직접 선택</h3>
+          <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+            {fishList.map((fish) => (
+              <button
+                key={fish}
+                onClick={() => handleManualSelect(fish)}
+                className="px-3 py-1.5 rounded-lg bg-white/10 text-white/70 text-[12px] hover:bg-teal-500/30 hover:text-white transition-colors"
+              >
+                {fish}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
       {/* AI Disclaimer */}
-      {!result && !error && (
+      {!result && !error && !showManualSelect && (
         <div
           className="relative z-10 mt-5 p-4 rounded-xl backdrop-blur-sm"
           style={{
@@ -306,7 +319,7 @@ export default function CameraPage() {
           <div className="flex items-start gap-3">
             <span className="w-1.5 h-1.5 rounded-full bg-teal-400/50 mt-1.5 shrink-0" />
             <p className="font-sans text-[12px] text-white/40 leading-relaxed">
-              Google Gemini AI로 분석합니다. 정확한 어종 판별이 가능합니다.
+              Hugging Face AI로 분석합니다. 정확하지 않을 경우 직접 선택할 수 있습니다.
             </p>
           </div>
         </div>
@@ -314,15 +327,14 @@ export default function CameraPage() {
 
       {/* AI Result */}
       {result && (
-        <div className="relative z-10 mt-6 animate-fadeUp">
+        <div className="relative z-10 mt-4 animate-fadeUp">
           <div
-            className="p-6 rounded-2xl backdrop-blur-sm relative overflow-hidden"
+            className="p-5 rounded-2xl backdrop-blur-sm relative overflow-hidden"
             style={{
               background: 'linear-gradient(145deg, rgba(60, 110, 110, 0.2) 0%, rgba(40, 85, 85, 0.08) 100%)',
               border: '1px solid rgba(100, 160, 160, 0.15)',
             }}
           >
-            {/* Accent line */}
             <div
               className="absolute top-0 left-0 w-1 h-full"
               style={{
@@ -330,18 +342,23 @@ export default function CameraPage() {
               }}
             />
 
-            {/* 어종 인식 실패 */}
             {result.isFish === false ? (
               <div className="text-center py-4">
                 <div className="text-[40px] mb-3">🐟</div>
                 <h2 className="font-sans text-[20px] font-light text-white/70 mb-2">물고기가 아닙니다</h2>
                 <p className="font-sans text-[12px] text-white/40">물고기 사진을 업로드해 주세요</p>
+                <button
+                  onClick={() => setShowManualSelect(true)}
+                  className="mt-4 px-4 py-2 rounded-lg bg-white/10 text-white/70 text-[12px] hover:bg-white/20 transition-colors"
+                >
+                  직접 어종 선택하기
+                </button>
               </div>
             ) : (
               <>
                 {/* Confidence */}
-                <div className="mb-5">
-                  <div className="flex justify-between items-center mb-3">
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-2">
                     <span className="font-sans text-[11px] text-white/45">신뢰도</span>
                     <span
                       className="font-mono text-[14px] font-semibold"
@@ -363,31 +380,11 @@ export default function CameraPage() {
 
                 {/* Fish Name */}
                 <div className="mb-4">
-                  <h2 className="font-sans text-[32px] font-light text-white/90 tracking-tight leading-none mb-1">
+                  <h2 className="font-sans text-[28px] font-light text-white/90 tracking-tight leading-none mb-1">
                     {result.name}
                   </h2>
-                  <p className="font-mono text-[10px] text-white/30 tracking-wider">{result.nameEn}</p>
-                </div>
-
-                {/* Fish Info */}
-                <div className="space-y-2 mb-4">
-                  {result.info && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[12px]">📏</span>
-                      <span className="font-sans text-[12px] text-white/50">{result.info}</span>
-                    </div>
-                  )}
-                  {result.habitat && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[12px]">🌊</span>
-                      <span className="font-sans text-[12px] text-white/50">서식지: {result.habitat}</span>
-                    </div>
-                  )}
                   {result.description && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[12px]">💡</span>
-                      <span className="font-sans text-[12px] text-white/50">{result.description}</span>
-                    </div>
+                    <p className="font-sans text-[12px] text-white/50 mt-2">{result.description}</p>
                   )}
                 </div>
 
@@ -411,11 +408,6 @@ export default function CameraPage() {
                         </p>
                       </div>
                     </div>
-                    {result.minLength && (
-                      <p className="mt-3 text-[11px] text-white/40">
-                        ⚠️ 최소 체장 미만 포획 시 과태료가 부과될 수 있습니다
-                      </p>
-                    )}
                   </div>
                 )}
 
@@ -431,24 +423,15 @@ export default function CameraPage() {
                   </div>
                 )}
 
-                {/* Badge */}
-                <div className="mt-4">
-                  <span
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium"
-                    style={{
-                      background: getConfidenceColor(result.confidence).bg,
-                      color: getConfidenceColor(result.confidence).main,
-                    }}
+                {/* 다른 어종 선택 버튼 */}
+                {result.confidence < 100 && (
+                  <button
+                    onClick={() => setShowManualSelect(true)}
+                    className="w-full mt-2 py-3 rounded-xl bg-white/5 text-white/60 text-[13px] hover:bg-white/10 transition-colors"
                   >
-                    <span
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{ background: getConfidenceColor(result.confidence).main }}
-                    />
-                    {result.confidence >= 70 && '높은 신뢰도'}
-                    {result.confidence >= 50 && result.confidence < 70 && '보통 신뢰도'}
-                    {result.confidence < 50 && '낮은 신뢰도'}
-                  </span>
-                </div>
+                    다른 어종 선택하기
+                  </button>
+                )}
               </>
             )}
           </div>
