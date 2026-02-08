@@ -356,34 +356,29 @@ export default function RegulationsPage() {
           </div>
 
           {/* Prohibited / Closed Season */}
-          <div
-            className="p-5 rounded-2xl backdrop-blur-sm relative overflow-hidden"
-            style={{
-              background: 'linear-gradient(145deg, rgba(150, 90, 90, 0.18) 0%, rgba(120, 70, 70, 0.08) 100%)',
-              border: '1px solid rgba(180, 110, 110, 0.12)',
-            }}
-          >
-            <div
-              className="absolute top-0 left-0 w-1 h-full"
-              style={{ background: 'linear-gradient(180deg, #ef4444, #dc2626)' }}
-            />
-            <div className="flex items-center gap-2 mb-5">
-              <span className="w-2 h-2 rounded-full bg-rose-400/60" />
-              <h3 className="font-sans text-[13px] font-medium text-rose-300/80">
+          <div className="mb-1">
+            <div className="flex items-center gap-2 mb-3 pl-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-400/70" />
+              <h3 className="font-sans text-[12px] font-medium text-white/40 uppercase tracking-wider">
                 금지어종 / 금어기
               </h3>
             </div>
-            <div className="space-y-0">
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{ background: 'rgba(255, 255, 255, 0.06)' }}
+            >
               {data.prohibited.map((item, index) => (
                 <div
                   key={index}
-                  className="flex justify-between items-center py-4 border-b border-white/5 last:border-b-0 last:pb-0 first:pt-0"
+                  className="flex justify-between items-center px-4 py-3.5"
+                  style={{
+                    borderBottom: index < data.prohibited.length - 1
+                      ? '1px solid rgba(255, 255, 255, 0.05)'
+                      : 'none',
+                  }}
                 >
-                  <span className="font-sans text-[15px] text-white/80">{item.name}</span>
-                  <span
-                    className="font-mono text-[11px] text-white/50 px-3 py-1.5 rounded-lg"
-                    style={{ background: 'rgba(255, 255, 255, 0.06)' }}
-                  >
+                  <span className="font-sans text-[14px] text-white/70">{item.name}</span>
+                  <span className="font-mono text-[12px] text-white/45">
                     {item.period}
                   </span>
                 </div>
@@ -392,48 +387,40 @@ export default function RegulationsPage() {
           </div>
 
           {/* Minimum Size */}
-          <div
-            className="p-5 rounded-2xl backdrop-blur-sm relative overflow-hidden"
-            style={{
-              background: 'linear-gradient(145deg, rgba(70, 130, 130, 0.18) 0%, rgba(50, 100, 100, 0.08) 100%)',
-              border: '1px solid rgba(100, 160, 160, 0.12)',
-            }}
-          >
-            <div
-              className="absolute top-0 left-0 w-1 h-full"
-              style={{ background: 'linear-gradient(180deg, #2dd4bf, #14b8a6)' }}
-            />
-            <div className="flex items-center gap-2 mb-5">
-              <span className="w-2 h-2 rounded-full bg-teal-400/60" />
-              <h3 className="font-sans text-[13px] font-medium text-teal-300/80">
+          <div className="mb-1">
+            <div className="flex items-center gap-2 mb-3 pl-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-400/70" />
+              <h3 className="font-sans text-[12px] font-medium text-white/40 uppercase tracking-wider">
                 금지체장
               </h3>
             </div>
-            <div className="space-y-0">
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{ background: 'rgba(255, 255, 255, 0.06)' }}
+            >
               {data.minSize.map((item, index) => (
                 <div
                   key={index}
-                  className="flex justify-between items-center py-4 border-b border-white/5 last:border-b-0 last:pb-0 first:pt-0"
+                  className="flex justify-between items-center px-4 py-3.5"
+                  style={{
+                    borderBottom: index < data.minSize.length - 1
+                      ? '1px solid rgba(255, 255, 255, 0.05)'
+                      : 'none',
+                  }}
                 >
-                  <span className="font-sans text-[15px] text-white/80">{item.name}</span>
-                  <div className="flex items-baseline gap-1">
-                    <span className="font-sans text-[20px] font-light text-white/85">
-                      {item.size}
-                    </span>
-                    <span className="font-sans text-[11px] text-white/35">cm 이상</span>
-                  </div>
+                  <span className="font-sans text-[14px] text-white/70">{item.name}</span>
+                  <span className="font-mono text-[13px] text-white/55">
+                    {item.size}<span className="text-[11px] text-white/30 ml-0.5">cm</span>
+                  </span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Info note */}
-          <div className="flex items-start gap-3 pt-2 px-1">
-            <span className="w-1 h-1 rounded-full bg-white/20 mt-2 shrink-0" />
-            <p className="font-sans text-[11px] text-white/30 leading-relaxed">
-              규정은 변경될 수 있습니다. 출조 전 해당 지역 관할 기관에 최신 정보를 확인하세요.
-            </p>
-          </div>
+          <p className="font-sans text-[11px] text-white/25 leading-relaxed pl-1">
+            * 규정은 변경될 수 있습니다. 출조 전 해당 지역 관할 기관에 최신 정보를 확인하세요.
+          </p>
         </div>
       )}
 
