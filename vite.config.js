@@ -6,5 +6,12 @@ export default defineConfig({
   server: {
     host: true,
     port: 3000,
+    proxy: {
+      '/hf-api': {
+        target: 'https://router.huggingface.co',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/hf-api/, ''),
+      },
+    },
   },
 })

@@ -6,6 +6,9 @@ export default function ProfilePage({ onNavigate }) {
   const [isEditing, setIsEditing] = useState(false)
   const [nickname, setNickname] = useState(user?.nickname || '')
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [showLoginRequired, setShowLoginRequired] = useState(false)
+
+  const isGuest = user?.provider !== 'kakao'
 
   const handleSaveNickname = () => {
     if (nickname.trim()) {
@@ -133,7 +136,7 @@ export default function ProfilePage({ onNavigate }) {
                     </button>
                   </div>
                   <p className="text-sm text-slate-500">
-                    {user?.provider === 'kakao' ? '카카오 로그인' : '체험용 계정'}
+                    {user?.provider === 'kakao' ? '카카오 로그인' : 'Guest'}
                   </p>
                 </>
               )}
@@ -148,7 +151,13 @@ export default function ProfilePage({ onNavigate }) {
           {menuItems.map((item, index) => (
             <button
               key={index}
-              onClick={() => onNavigate?.(item.page)}
+              onClick={() => {
+                if (isGuest) {
+                  setShowLoginRequired(true)
+                  return
+                }
+                onNavigate?.(item.page)
+              }}
               className="w-full flex items-center gap-4 px-4 py-4 hover:bg-slate-700/30 transition-colors text-left"
             >
               <div className="text-slate-400">{item.icon}</div>
@@ -175,16 +184,6 @@ export default function ProfilePage({ onNavigate }) {
       <div className="px-5 mb-6">
         <p className="text-xs text-slate-500 mb-2 px-1">설정</p>
         <div className="bg-slate-800/50 rounded-xl overflow-hidden divide-y divide-slate-700/50">
-          <button className="w-full flex items-center gap-4 px-4 py-4 hover:bg-slate-700/30 transition-colors text-left">
-            <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            <span className="flex-1 text-white text-sm">알림 설정</span>
-            <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-
           <button
             onClick={() => setShowLogoutConfirm(true)}
             className="w-full flex items-center gap-4 px-4 py-4 hover:bg-slate-700/30 transition-colors text-left"
@@ -198,6 +197,35 @@ export default function ProfilePage({ onNavigate }) {
       </div>
 
       <div className="h-24" />
+
+      {/* Login Required Modal */}
+      {showLoginRequired && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
+          <div className="bg-slate-800 rounded-xl p-5 w-full max-w-sm">
+            <h3 className="text-white font-semibold mb-2">로그인 필요</h3>
+            <p className="text-slate-400 text-sm mb-5">
+              로그인이 필요한 기능입니다.<br />카카오 로그인 후 이용해주세요.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLoginRequired(false)}
+                className="flex-1 py-2.5 bg-slate-700 text-slate-300 rounded-lg text-sm"
+              >
+                닫기
+              </button>
+              <button
+                onClick={() => {
+                  setShowLoginRequired(false)
+                  onNavigate?.('login')
+                }}
+                className="flex-1 py-2.5 bg-[#FEE500] text-[#191919] rounded-lg text-sm font-medium"
+              >
+                로그인하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Logout Confirm Modal */}
       {showLogoutConfirm && (
