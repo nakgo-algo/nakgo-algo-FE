@@ -111,18 +111,18 @@ export default function CheckPage() {
   }
 
   return (
-    <div className="h-full bg-slate-100 pt-16 pb-8 px-5 overflow-y-auto">
+    <div className="h-full bg-slate-900 pt-16 pb-8 px-5 overflow-y-auto">
       {/* Header */}
       <div className="mb-6 pt-4">
-        <h1 className="text-2xl font-bold text-slate-900 mb-1">위반 판단</h1>
-        <p className="text-sm text-slate-500">어종과 크기로 포획 가능 여부 확인</p>
+        <h1 className="text-2xl font-bold text-white mb-1">위반 판단</h1>
+        <p className="text-sm text-slate-400">어종과 크기로 포획 가능 여부 확인</p>
       </div>
 
       {/* Form */}
       <div className="space-y-4 max-w-sm mx-auto">
         {/* Fish Select */}
         <div>
-          <label className="block text-xs text-slate-500 mb-2">어종</label>
+          <label className="block text-xs text-slate-400 mb-2">어종</label>
           {!showCustomInput ? (
             <select
               value={fish}
@@ -157,7 +157,7 @@ export default function CheckPage() {
 
         {/* Length Input */}
         <div>
-          <label className="block text-xs text-slate-500 mb-2">전장 길이</label>
+          <label className="block text-xs text-slate-400 mb-2">전장 길이</label>
           <div className="flex items-center gap-2">
             <input
               type="number"
@@ -168,7 +168,7 @@ export default function CheckPage() {
               step="0.1"
               className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white text-2xl outline-none focus:border-slate-600 placeholder:text-slate-600"
             />
-            <span className="text-slate-500 text-lg">cm</span>
+            <span className="text-slate-400 text-lg">cm</span>
           </div>
         </div>
 
