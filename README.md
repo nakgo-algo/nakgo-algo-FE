@@ -10,7 +10,7 @@
 
 ## 실행
 ```bash
-cd nakgo-algo-app
+cd nakgo-algo-web
 npm install
 npm run dev
 ```
