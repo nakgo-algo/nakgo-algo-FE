@@ -1,4 +1,4 @@
-# nakgo-algo_FE
+# nakgo-algo-FE
 
 낚고알고 프론트엔드
 
