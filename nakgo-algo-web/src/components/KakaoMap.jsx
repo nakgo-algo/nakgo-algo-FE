@@ -86,7 +86,7 @@ export default function KakaoMap({ userLocation, defaultCenter, onMapReady, onMa
       map.addControl(zoomControl, window.kakao.maps.ControlPosition.RIGHT)
 
       setIsMapLoaded(true)
-      onMapReady?.()
+      onMapReady?.(map)
 
       // 뷰포트 기반 로딩
       loadVisibleZones(map)

@@ -4,11 +4,12 @@ import api from '../api'
 export default function FinesPage() {
   const [fines, setFines] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     api.get('/fines')
       .then(setFines)
-      .catch(() => {})
+      .catch(() => setError('벌금 정보를 불러올 수 없습니다'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -30,6 +31,14 @@ export default function FinesPage() {
       {loading ? (
         <div className="flex justify-center py-12">
           <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-16">
+          <svg className="w-10 h-10 text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <p className="text-slate-500 text-sm">{error}</p>
+          <button onClick={() => window.location.reload()} className="mt-3 text-xs text-slate-400 hover:text-white transition-colors">다시 시도</button>
         </div>
       ) : (
         <div className="space-y-3">
@@ -55,6 +64,14 @@ export default function FinesPage() {
       <p className="mt-6 text-[11px] text-slate-500 leading-relaxed">
         * 위 정보는 참고용이며, 실제 처벌은 관련 법률에 따라 달라질 수 있습니다.
       </p>
+      <div className="mt-4 pt-3 border-t border-slate-700/30">
+        <p className="text-[10px] text-slate-600 leading-relaxed">
+          출처: 해양수산부, 국가법령정보센터 (수산업법, 낚시관리및육성법, 내수면어업법)
+        </p>
+        <p className="text-[10px] text-slate-600">
+          자료 확인일: 2025.02
+        </p>
+      </div>
       <div className="h-20" />
     </div>
   )

@@ -4,58 +4,6 @@ import useUserLocation from '../hooks/useUserLocation'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../api'
 
-// 모바일 접속 QR 코드 컴포넌트
-function MobileQRCode() {
-  const [showQR, setShowQR] = useState(false)
-  const networkUrl = 'http://192.168.1.19:3000'
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(networkUrl)}`
-
-  return (
-    <>
-      {/* QR 버튼 */}
-      <button
-        onClick={() => setShowQR(!showQR)}
-        className="w-9 h-9 rounded-lg bg-slate-800/80 flex items-center justify-center"
-        title="모바일 접속 QR"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-          <rect x="3" y="3" width="7" height="7" rx="1" />
-          <rect x="14" y="3" width="7" height="7" rx="1" />
-          <rect x="3" y="14" width="7" height="7" rx="1" />
-          <rect x="14" y="14" width="3" height="3" />
-          <rect x="18" y="14" width="3" height="3" />
-          <rect x="14" y="18" width="3" height="3" />
-          <rect x="18" y="18" width="3" height="3" />
-        </svg>
-      </button>
-
-      {/* QR 모달 */}
-      {showQR && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={() => setShowQR(false)}
-        >
-          <div
-            className="bg-white rounded-xl p-5 mx-4 max-w-xs w-full text-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-gray-800 font-semibold mb-1">모바일 접속</h3>
-            <p className="text-gray-500 text-sm mb-4">같은 Wi-Fi에서 스캔</p>
-            <img src={qrUrl} alt="QR Code" className="w-32 h-32 mx-auto mb-3" />
-            <p className="text-gray-400 text-xs font-mono">{networkUrl}</p>
-            <button
-              onClick={() => setShowQR(false)}
-              className="mt-4 px-5 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm"
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
-    </>
-  )
-}
-
 export default function MapPage({ locationStatus, onLocationAllow, onLocationDeny, onNavigate }) {
   const { isLoggedIn, user } = useAuth()
   const {
@@ -74,33 +22,21 @@ export default function MapPage({ locationStatus, onLocationAllow, onLocationDen
   const [selectMode, setSelectMode] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState(null)
   const [myPoints, setMyPoints] = useState([])
+  const [pointsError, setPointsError] = useState(null)
   const [zones, setZones] = useState(null)
+  const mapInstanceRef = useRef(null)
 
   // 포인트 목록 불러오기
   useEffect(() => {
     if (isLoggedIn) {
       api.get('/points')
         .then(setMyPoints)
-        .catch(() => {})
+        .catch(() => setPointsError('포인트를 불러올 수 없습니다'))
     }
   }, [isLoggedIn])
 
-  // 구역 데이터 불러오기
-  useEffect(() => {
-    api.get('/zones')
-      .then(data => {
-        const transformed = data.map(z => ({
-          id: z.id,
-          name: z.name,
-          type: z.type,
-          coordinates: z.coordinates.map(c => ({ lat: c[0], lng: c[1] })),
-          description: z.description,
-          period: z.period,
-        }))
-        setZones(transformed)
-      })
-      .catch(() => {})
-  }, [])
+  // 구역 데이터: 정적 데이터 사용 (백엔드 데이터가 충분하지 않으므로)
+  // 추후 백엔드에 충분한 zone 데이터가 추가되면 API 연결로 전환
 
   // 포인트 저장
   const savePoint = async (point) => {
@@ -185,8 +121,19 @@ export default function MapPage({ locationStatus, onLocationAllow, onLocationDen
     }
   }, [locationStatus, isMapReady, getCurrentPosition, startWatching, stopWatching])
 
-  const handleMapReady = () => {
+  const handleMapReady = (map) => {
     setIsMapReady(true)
+    mapInstanceRef.current = map
+  }
+
+  const panToPoint = (point) => {
+    const map = mapInstanceRef.current
+    if (map && window.kakao) {
+      const pos = new window.kakao.maps.LatLng(point.lat, point.lng)
+      map.setLevel(3)
+      map.panTo(pos)
+    }
+    setShowPointsList(false)
   }
 
   const handleAllowClick = () => {
@@ -214,6 +161,16 @@ export default function MapPage({ locationStatus, onLocationAllow, onLocationDen
           zones={zones}
         />
       </div>
+
+      {/* 포인트 에러 토스트 */}
+      {pointsError && (
+        <div style={{ position: 'absolute', top: '70px', left: '16px', right: '16px', zIndex: 25 }}>
+          <div className="bg-red-500/90 text-white rounded-lg px-4 py-2.5 shadow-lg flex items-center justify-between">
+            <p className="text-sm">{pointsError}</p>
+            <button onClick={() => setPointsError(null)} className="ml-3 text-white/70 hover:text-white text-lg leading-none">&times;</button>
+          </div>
+        </div>
+      )}
 
       {/* 우측 하단 버튼들 */}
       <div style={{ position: 'absolute', bottom: '24px', right: '16px', zIndex: 20 }} className="flex flex-col gap-2">
@@ -257,29 +214,8 @@ export default function MapPage({ locationStatus, onLocationAllow, onLocationDen
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
         </button>
-        {/* QR 코드 버튼 */}
-        <MobileQRCode />
       </div>
 
-      {/* 범례 */}
-      {!selectMode && (
-        <div style={{ position: 'absolute', bottom: '24px', left: '16px', zIndex: 20 }}>
-          <div className="flex items-center gap-4 text-[11px] text-white drop-shadow-md">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-red-500" />
-              금지
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-orange-500" />
-              제한
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-500" />
-              내 위치
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* 위치 선택 모드 UI */}
       {selectMode && (
@@ -367,6 +303,7 @@ export default function MapPage({ locationStatus, onLocationAllow, onLocationDen
         <PointsListModal
           points={myPoints}
           onDelete={deletePoint}
+          onSelect={panToPoint}
           onClose={() => setShowPointsList(false)}
         />
       )}
@@ -453,7 +390,7 @@ function SavePointModal({ location, onSave, onClose }) {
 }
 
 // 포인트 목록 모달
-function PointsListModal({ points, onDelete, onClose }) {
+function PointsListModal({ points, onDelete, onSelect, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
       <div className="bg-slate-800 w-full max-w-lg rounded-t-2xl max-h-[70vh] flex flex-col">
@@ -476,7 +413,7 @@ function PointsListModal({ points, onDelete, onClose }) {
           ) : (
             <div className="divide-y divide-slate-700/50">
               {points.map((point) => (
-                <div key={point.id} className="p-4 flex items-start gap-3">
+                <div key={point.id} className="p-4 flex items-start gap-3 cursor-pointer hover:bg-slate-700/50 transition-colors" onClick={() => onSelect?.(point)}>
                   <div className="w-8 h-8 rounded-full bg-teal-600/20 flex items-center justify-center flex-shrink-0">
                     <svg className="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -492,7 +429,8 @@ function PointsListModal({ points, onDelete, onClose }) {
                     </p>
                   </div>
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation()
                       if (confirm('이 포인트를 삭제할까요?')) {
                         onDelete(point.id)
                       }
@@ -512,7 +450,7 @@ function PointsListModal({ points, onDelete, onClose }) {
         {/* Footer */}
         <div className="p-4 border-t border-slate-700">
           <p className="text-center text-xs text-slate-500">
-            포인트를 탭하면 해당 위치로 이동합니다 (준비중)
+            포인트를 탭하면 해당 위치로 이동합니다
           </p>
         </div>
       </div>

@@ -17,11 +17,21 @@ const statusLabels = {
 }
 
 export default function ReportPage({ onNavigate }) {
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, user } = useAuth()
+  const isAdmin = user?.isAdmin === true
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all')
+  const [filter, setFilter] = useState('pending')
+
+  const handleStatusChange = async (reportId, newStatus) => {
+    try {
+      await api.put(`/reports/${reportId}/status`, { status: newStatus })
+      fetchReports()
+    } catch {
+      alert('상태 변경에 실패했습니다')
+    }
+  }
 
   const fetchReports = () => {
     setLoading(true)
@@ -70,12 +80,15 @@ export default function ReportPage({ onNavigate }) {
 
       {/* Filter Tabs */}
       <div className="px-5 py-3 flex gap-2 border-b border-slate-800">
-        {[
-          { value: 'all', label: '전체' },
-          { value: 'pending', label: '대기' },
-          { value: 'in_progress', label: '검토중' },
-          { value: 'completed', label: '완료' },
-        ].map((tab) => (
+        {(isAdmin
+          ? [
+              { value: 'all', label: '전체' },
+              { value: 'pending', label: '대기' },
+              { value: 'in_progress', label: '검토중' },
+              { value: 'completed', label: '완료' },
+            ]
+          : [{ value: 'pending', label: '내 제보' }]
+        ).map((tab) => (
           <button
             key={tab.value}
             onClick={() => setFilter(tab.value)}
@@ -139,6 +152,35 @@ export default function ReportPage({ onNavigate }) {
                   <span>·</span>
                   <span>{report.createdAt}</span>
                 </div>
+
+                {/* 반영 완료 감사 메시지 */}
+                {report.status === 'completed' && (
+                  <div className="mt-2 bg-green-500/10 border border-green-500/20 rounded-lg p-2">
+                    <p className="text-[11px] text-green-400">
+                      제보가 반영되었습니다. 감사합니다! 보상이 지급됩니다.
+                    </p>
+                  </div>
+                )}
+
+                {/* 어드민 상태 변경 */}
+                {isAdmin && (
+                  <div className="mt-2 flex gap-1.5 flex-wrap">
+                    {['pending', 'in_progress', 'completed', 'rejected'].map(s => (
+                      <button
+                        key={s}
+                        onClick={() => handleStatusChange(report.id, s)}
+                        disabled={report.status === s}
+                        className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                          report.status === s
+                            ? 'bg-slate-600 text-slate-300 cursor-default'
+                            : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white'
+                        }`}
+                      >
+                        {statusLabels[s]?.label || s}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -190,7 +232,7 @@ function CreateReportModal({ onClose, onCreated, initialLocation }) {
         location: location.trim(),
         description: description.trim(),
       })
-      alert('제보해주셔서 감사합니다! 검토 후 반영하겠습니다.')
+      alert('제보해주셔서 감사합니다!\n검토 후 반영하겠습니다.\n오류가 반영되면 보상이 지급됩니다.')
       onCreated()
     } catch {
       alert('제보 등록에 실패했습니다')

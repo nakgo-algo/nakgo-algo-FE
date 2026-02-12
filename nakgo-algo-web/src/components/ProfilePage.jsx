@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../api'
 
@@ -10,6 +10,8 @@ export default function ProfilePage({ onNavigate }) {
   const [showLoginRequired, setShowLoginRequired] = useState(false)
   const [pointCount, setPointCount] = useState(0)
   const [reportCount, setReportCount] = useState(0)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const fileInputRef = useRef(null)
 
   const isGuest = user?.provider !== 'kakao'
 
@@ -19,6 +21,25 @@ export default function ProfilePage({ onNavigate }) {
       api.get('/reports').then(data => setReportCount(data.length)).catch(() => {})
     }
   }, [isGuest])
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      alert('이미지 크기는 5MB 이하여야 합니다')
+      return
+    }
+    setUploadingImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+      const data = await api.upload('/profile/image', formData)
+      updateProfile({ profileImage: data.profileImage })
+    } catch {
+      alert('프로필 사진 변경에 실패했습니다')
+    }
+    setUploadingImage(false)
+  }
 
   const handleSaveNickname = () => {
     if (nickname.trim()) {
@@ -50,17 +71,6 @@ export default function ProfilePage({ onNavigate }) {
       desc: '저장한 낚시 장소',
       page: 'myPoints',
       count: pointCount,
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      ),
-      label: '조과 기록',
-      desc: '잡은 물고기 기록',
-      page: 'catchRecords',
-      count: 0,
     },
     {
       icon: (
@@ -98,18 +108,43 @@ export default function ProfilePage({ onNavigate }) {
         <div className="bg-slate-800/50 rounded-xl p-5">
           <div className="flex items-center gap-4">
             {/* Avatar */}
-            <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
-              {user?.profileImage ? (
-                <img
-                  src={user.profileImage}
-                  alt="프로필"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <svg className="w-8 h-8 text-slate-500" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                </svg>
+            <div className="relative">
+              <div
+                className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden cursor-pointer"
+                onClick={() => !isGuest && fileInputRef.current?.click()}
+              >
+                {uploadingImage ? (
+                  <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+                ) : user?.profileImage ? (
+                  <img
+                    src={user.profileImage}
+                    alt="프로필"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <svg className="w-8 h-8 text-slate-500" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                  </svg>
+                )}
+              </div>
+              {!isGuest && (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute -bottom-0.5 -right-0.5 w-6 h-6 bg-teal-600 rounded-full flex items-center justify-center border-2 border-slate-800"
+                >
+                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
               )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+              />
             </div>
 
             {/* User Info */}

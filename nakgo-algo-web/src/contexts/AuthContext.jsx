@@ -4,12 +4,14 @@ import api from '../api'
 const AuthContext = createContext(null)
 
 const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY || ''
+const KAKAO_REST_KEY = import.meta.env.VITE_KAKAO_REST_KEY || ''
+const REDIRECT_URI = window.location.origin
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // 카카오 SDK 로드
+  // 카카오 SDK 로드 + 리다이렉트 코드 처리
   useEffect(() => {
     const script = document.createElement('script')
     script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.6.0/kakao.min.js'
@@ -18,12 +20,54 @@ export function AuthProvider({ children }) {
       if (window.Kakao && !window.Kakao.isInitialized() && KAKAO_JS_KEY) {
         window.Kakao.init(KAKAO_JS_KEY)
       }
-      checkLoginStatus()
+      handleKakaoRedirect()
     }
-    script.onerror = () => checkLoginStatus()
+    script.onerror = () => handleKakaoRedirect()
     document.head.appendChild(script)
     return () => document.head.removeChild(script)
   }, [])
+
+  // 카카오 리다이렉트 후 code 파라미터 처리
+  const handleKakaoRedirect = async () => {
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('code')
+
+    if (code) {
+      // URL에서 code 파라미터 제거
+      window.history.replaceState({}, '', window.location.pathname)
+
+      try {
+        // code → access_token 교환
+        const tokenRes = await fetch('https://kauth.kakao.com/oauth/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            grant_type: 'authorization_code',
+            client_id: KAKAO_REST_KEY,
+            redirect_uri: REDIRECT_URI,
+            code,
+          }),
+        })
+        const tokenData = await tokenRes.json()
+
+        if (tokenData.access_token) {
+          // 백엔드에 access_token 전달 → JWT 발급
+          const data = await api.post('/auth/kakao', {
+            accessToken: tokenData.access_token,
+          })
+          api.setToken(data.token)
+          setUser({ ...data.user, provider: 'kakao' })
+        }
+      } catch (err) {
+        console.error('[Auth] 카카오 로그인 처리 실패:', err)
+      }
+      setIsLoading(false)
+      return
+    }
+
+    // code가 없으면 기존 토큰 확인
+    checkLoginStatus()
+  }
 
   // 저장된 토큰으로 로그인 상태 복원
   const checkLoginStatus = async () => {
@@ -41,32 +85,10 @@ export function AuthProvider({ children }) {
     setIsLoading(false)
   }
 
-  // 카카오 로그인 → 백엔드 JWT 발급
+  // 카카오 로그인 (리다이렉트 방식)
   const loginWithKakao = () => {
-    return new Promise((resolve, reject) => {
-      if (!window.Kakao) {
-        loginDemo()
-        resolve(user)
-        return
-      }
-
-      window.Kakao.Auth.login({
-        success: async (authObj) => {
-          try {
-            const data = await api.post('/auth/kakao', {
-              accessToken: authObj.access_token,
-            })
-            api.setToken(data.token)
-            const loggedUser = { ...data.user, provider: 'kakao' }
-            setUser(loggedUser)
-            resolve(loggedUser)
-          } catch (err) {
-            reject(err)
-          }
-        },
-        fail: (error) => reject(error),
-      })
-    })
+    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_REST_KEY}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code`
+    window.location.href = kakaoAuthUrl
   }
 
   // 데모 로그인 (로컬만, JWT 없음)
@@ -89,9 +111,6 @@ export function AuthProvider({ children }) {
       } catch {}
     }
     api.clearToken()
-    if (window.Kakao?.Auth?.getAccessToken()) {
-      window.Kakao.Auth.logout(() => {})
-    }
     setUser(null)
   }
 

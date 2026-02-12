@@ -127,6 +127,7 @@ export default function RegulationsPage() {
   const [search, setSearch] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [regulationsMap, setRegulationsMap] = useState({})
+  const [error, setError] = useState(null)
   const searchRef = useRef(null)
 
   useEffect(() => {
@@ -142,7 +143,7 @@ export default function RegulationsPage() {
         })
         setRegulationsMap(map)
       })
-      .catch(() => {})
+      .catch(() => setError('규정 정보를 불러올 수 없습니다'))
   }, [])
 
   const allRegions = useMemo(() => [
@@ -341,7 +342,15 @@ export default function RegulationsPage() {
       </div>
 
       {/* Content */}
-      {!data ? (
+      {error ? (
+        <div className="relative z-10 flex flex-col items-center justify-center py-16">
+          <svg className="w-10 h-10 text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <p className="text-slate-500 text-sm">{error}</p>
+          <button onClick={() => window.location.reload()} className="mt-3 text-xs text-slate-400 hover:text-white transition-colors">다시 시도</button>
+        </div>
+      ) : !data ? (
         <div className="relative z-10 h-40 flex flex-col items-center justify-center">
           <div className="w-16 h-16 mb-4 rounded-2xl bg-white/5 flex items-center justify-center">
             <span className="font-sans text-2xl text-white/20">?</span>
@@ -427,6 +436,14 @@ export default function RegulationsPage() {
           <p className="font-sans text-[11px] text-white/25 leading-relaxed pl-1">
             * 규정은 변경될 수 있습니다. 출조 전 해당 지역 관할 기관에 최신 정보를 확인하세요.
           </p>
+          <div className="mt-3 pt-3 pl-1" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <p className="font-sans text-[10px] text-white/20 leading-relaxed">
+              출처: 해양수산부, 국가법령정보센터 (수산업법, 내수면어업법)
+            </p>
+            <p className="font-sans text-[10px] text-white/20">
+              자료 확인일: 2025.02
+            </p>
+          </div>
         </div>
       )}
 

@@ -9,11 +9,12 @@ export default function CheckPage() {
   const [result, setResult] = useState(null)
   const [showCustomInput, setShowCustomInput] = useState(false)
   const [checking, setChecking] = useState(false)
+  const [speciesError, setSpeciesError] = useState(false)
 
   useEffect(() => {
     api.get('/fish/species')
       .then(setSpeciesList)
-      .catch(() => {})
+      .catch(() => setSpeciesError(true))
   }, [])
 
   const handleFishChange = (e) => {
@@ -82,7 +83,10 @@ export default function CheckPage() {
 
       <div className="space-y-4 max-w-sm mx-auto">
         <div>
-          <label className="block text-xs text-slate-400 mb-2">어종</label>
+          <label className="block text-xs text-slate-400 mb-2">
+            어종
+            {speciesError && <span className="text-red-400/70 ml-2">목록 로드 실패 - 직접 입력하세요</span>}
+          </label>
           {!showCustomInput ? (
             <select
               value={fish}
@@ -116,8 +120,8 @@ export default function CheckPage() {
         </div>
 
         <div>
-          <label className="block text-xs text-slate-400 mb-2">전장 길이</label>
-          <div className="flex items-center gap-2">
+          <label className="block text-xs text-slate-400 mb-2">길이</label>
+          <div className="relative">
             <input
               type="number"
               value={length}
@@ -125,9 +129,9 @@ export default function CheckPage() {
               placeholder="0"
               min="0"
               step="0.1"
-              className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white text-2xl outline-none focus:border-slate-600 placeholder:text-slate-600"
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white outline-none focus:border-slate-600 placeholder:text-slate-600 pr-12"
             />
-            <span className="text-slate-400 text-lg">cm</span>
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">cm</span>
           </div>
         </div>
 
@@ -135,7 +139,7 @@ export default function CheckPage() {
           <button
             onClick={handleCheck}
             disabled={checking}
-            className="px-16 py-3.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-medium rounded-lg transition-colors"
+            className="px-16 py-3.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white font-medium rounded-lg transition-colors border border-slate-600"
           >
             {checking ? '확인 중...' : '판정하기'}
           </button>

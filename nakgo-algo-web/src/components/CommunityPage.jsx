@@ -6,16 +6,19 @@ export default function CommunityPage() {
   const { isLoggedIn } = useAuth()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [showWriteModal, setShowWriteModal] = useState(false)
   const [selectedPost, setSelectedPost] = useState(null)
 
   const fetchPosts = useCallback(async () => {
+    setError(null)
     try {
       const params = searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ''
       const data = await api.get(`/posts${params}`)
       setPosts(data)
     } catch {
+      setError('게시글을 불러올 수 없습니다')
       setPosts([])
     }
     setLoading(false)
@@ -70,6 +73,14 @@ export default function CommunityPage() {
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-16">
+            <svg className="w-10 h-10 text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p className="text-slate-500 text-sm">{error}</p>
+            <button onClick={fetchPosts} className="mt-3 text-xs text-slate-400 hover:text-white transition-colors">다시 시도</button>
           </div>
         ) : posts.length === 0 ? (
           <div className="flex items-center justify-center h-40 text-slate-500 text-sm">
@@ -177,6 +188,7 @@ export default function CommunityPage() {
         <PostDetailModal
           postId={selectedPost}
           onClose={() => setSelectedPost(null)}
+          onDeleted={() => { setSelectedPost(null); fetchPosts() }}
         />
       )}
 
@@ -196,7 +208,20 @@ export default function CommunityPage() {
 function WritePostModal({ onClose, onCreated }) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [image, setImage] = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      alert('이미지 크기는 5MB 이하여야 합니다')
+      return
+    }
+    setImage(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
 
   const handleSubmit = async () => {
     if (!title.trim() || !content.trim()) {
@@ -205,7 +230,11 @@ function WritePostModal({ onClose, onCreated }) {
     }
     setSubmitting(true)
     try {
-      await api.post('/posts', { title: title.trim(), content: content.trim() })
+      const formData = new FormData()
+      formData.append('title', title.trim())
+      formData.append('content', content.trim())
+      if (image) formData.append('image', image)
+      await api.upload('/posts', formData)
       onCreated()
     } catch {
       alert('게시글 등록에 실패했습니다')
@@ -241,8 +270,30 @@ function WritePostModal({ onClose, onCreated }) {
           onChange={(e) => setContent(e.target.value)}
           placeholder="내용을 입력하세요"
           rows={5}
-          className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-slate-500 resize-none mb-4"
+          className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-slate-500 resize-none mb-3"
         />
+
+        {/* Image Upload */}
+        <div className="mb-4">
+          <label className="flex items-center gap-2 text-slate-400 text-sm cursor-pointer hover:text-slate-300 transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            사진 첨부
+            <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+          </label>
+          {imagePreview && (
+            <div className="mt-2 relative inline-block">
+              <img src={imagePreview} alt="미리보기" className="h-24 rounded-lg object-cover" />
+              <button
+                onClick={() => { setImage(null); setImagePreview(null) }}
+                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs"
+              >
+                &times;
+              </button>
+            </div>
+          )}
+        </div>
 
         <button
           onClick={handleSubmit}
@@ -256,12 +307,14 @@ function WritePostModal({ onClose, onCreated }) {
   )
 }
 
-function PostDetailModal({ postId, onClose }) {
-  const { isLoggedIn } = useAuth()
+function PostDetailModal({ postId, onClose, onDeleted }) {
+  const { isLoggedIn, user } = useAuth()
+  const isAdmin = user?.isAdmin
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
   const [commentText, setCommentText] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     api.get(`/posts/${postId}`)
@@ -283,17 +336,42 @@ function PostDetailModal({ postId, onClose }) {
     setSubmitting(false)
   }
 
+  const handleDelete = async () => {
+    if (!confirm('게시글을 삭제하시겠습니까?')) return
+    setDeleting(true)
+    try {
+      await api.delete(`/posts/${postId}`)
+      onDeleted?.()
+    } catch {
+      alert('삭제에 실패했습니다')
+      setDeleting(false)
+    }
+  }
+
+  const canDelete = isLoggedIn && post && (post.userId === user?.id || isAdmin)
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
       <div className="bg-slate-800 w-full max-w-lg rounded-t-2xl max-h-[85vh] flex flex-col animate-slide-up">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-700">
           <h3 className="text-lg font-semibold text-white">게시글</h3>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-white">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            {canDelete && (
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-3 py-1 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {deleting ? '삭제 중...' : '삭제'}
+              </button>
+            )}
+            <button onClick={onClose} className="p-1 text-slate-400 hover:text-white">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -309,6 +387,14 @@ function PostDetailModal({ postId, onClose }) {
                 <span className="text-xs text-slate-400">{post.author}</span>
                 <span className="text-xs text-slate-600">{post.date}</span>
               </div>
+
+              {/* Post Image */}
+              {post.image && (
+                <div className="mb-4 rounded-lg overflow-hidden bg-slate-700">
+                  <img src={post.image} alt="" className="w-full object-contain max-h-80" />
+                </div>
+              )}
+
               <p className="text-slate-300 text-sm whitespace-pre-wrap mb-6">{post.content}</p>
 
               {/* Comments */}
