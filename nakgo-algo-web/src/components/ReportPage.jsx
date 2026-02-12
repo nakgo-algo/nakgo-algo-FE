@@ -22,7 +22,7 @@ export default function ReportPage({ onNavigate }) {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('pending')
+  const [filter, setFilter] = useState('all')
 
   const handleStatusChange = async (reportId, newStatus) => {
     try {
@@ -87,7 +87,12 @@ export default function ReportPage({ onNavigate }) {
               { value: 'in_progress', label: '검토중' },
               { value: 'completed', label: '완료' },
             ]
-          : [{ value: 'pending', label: '내 제보' }]
+          : [
+              { value: 'all', label: '전체' },
+              { value: 'pending', label: '대기' },
+              { value: 'in_progress', label: '검토중' },
+              { value: 'completed', label: '완료' },
+            ]
         ).map((tab) => (
           <button
             key={tab.value}
@@ -153,11 +158,11 @@ export default function ReportPage({ onNavigate }) {
                   <span>{report.createdAt}</span>
                 </div>
 
-                {/* 반영 완료 감사 메시지 */}
-                {report.status === 'completed' && (
+                {/* 반영 완료 감사 메시지 (유저만) */}
+                {!isAdmin && report.status === 'completed' && (
                   <div className="mt-2 bg-green-500/10 border border-green-500/20 rounded-lg p-2">
                     <p className="text-[11px] text-green-400">
-                      제보가 반영되었습니다. 감사합니다! 보상이 지급됩니다.
+                      더 나은 서비스를 위해 기여해주셔서 감사합니다!
                     </p>
                   </div>
                 )}
@@ -232,7 +237,7 @@ function CreateReportModal({ onClose, onCreated, initialLocation }) {
         location: location.trim(),
         description: description.trim(),
       })
-      alert('제보해주셔서 감사합니다!\n검토 후 반영하겠습니다.\n오류가 반영되면 보상이 지급됩니다.')
+      alert('제보해주셔서 감사합니다!\n검토 후 반영하겠습니다.')
       onCreated()
     } catch {
       alert('제보 등록에 실패했습니다')
