@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import KakaoMap from './KakaoMap'
 import useUserLocation from '../hooks/useUserLocation'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import api from '../api'
 
 export default function MapPage({ locationStatus, onLocationAllow, onLocationDeny, onNavigate }) {
   const { isLoggedIn, user } = useAuth()
+  const toast = useToast()
   const {
     location,
     defaultCenter,
@@ -49,7 +51,7 @@ export default function MapPage({ locationStatus, onLocationAllow, onLocationDen
       })
       setMyPoints(prev => [...prev, saved])
     } catch {
-      alert('포인트 저장에 실패했습니다')
+      toast.error('포인트 저장에 실패했습니다')
     }
   }
 
@@ -59,7 +61,7 @@ export default function MapPage({ locationStatus, onLocationAllow, onLocationDen
       await api.delete(`/points/${id}`)
       setMyPoints(prev => prev.filter(p => p.id !== id))
     } catch {
-      alert('포인트 삭제에 실패했습니다')
+      toast.error('포인트 삭제에 실패했습니다')
     }
   }
 
@@ -73,7 +75,7 @@ export default function MapPage({ locationStatus, onLocationAllow, onLocationDen
   // 선택 모드 시작
   const startSelectMode = () => {
     if (!isLoggedIn) {
-      alert('로그인이 필요합니다')
+      toast.warn('로그인이 필요합니다')
       onNavigate?.('login')
       return
     }
@@ -318,7 +320,7 @@ function SavePointModal({ location, onSave, onClose }) {
 
   const handleSave = () => {
     if (!name.trim()) {
-      alert('포인트 이름을 입력해주세요')
+      toast.warn('포인트 이름을 입력해주세요')
       return
     }
     onSave({

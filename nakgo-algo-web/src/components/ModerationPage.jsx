@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import api from '../api'
+import { useToast } from '../contexts/ToastContext'
 
 export default function ModerationPage() {
+  const toast = useToast()
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [resolving, setResolving] = useState(null)
@@ -28,14 +30,14 @@ export default function ModerationPage() {
       await api.put(`/moderation/${id}/resolve`, { action: 'ignore' })
       setRequests(prev => prev.filter(r => r.id !== id))
     } catch {
-      alert('처리에 실패했습니다')
+      toast.error('처리에 실패했습니다')
     }
     setResolving(null)
   }
 
   const handleDelete = async () => {
     if (!deleteReason.trim()) {
-      alert('삭제 사유를 입력해주세요')
+      toast.warn('삭제 사유를 입력해주세요')
       return
     }
     const id = deleteModal
@@ -46,7 +48,7 @@ export default function ModerationPage() {
       setDeleteModal(null)
       setDeleteReason('')
     } catch {
-      alert('처리에 실패했습니다')
+      toast.error('처리에 실패했습니다')
     }
     setResolving(null)
   }

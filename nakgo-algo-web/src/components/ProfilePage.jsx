@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import api from '../api'
 
 export default function ProfilePage({ onNavigate }) {
   const { user, logout, updateProfile } = useAuth()
+  const toast = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [nickname, setNickname] = useState(user?.nickname || '')
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
@@ -26,7 +28,7 @@ export default function ProfilePage({ onNavigate }) {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 5 * 1024 * 1024) {
-      alert('이미지 크기는 5MB 이하여야 합니다')
+      toast.warn('이미지 크기는 5MB 이하여야 합니다')
       return
     }
     setUploadingImage(true)
@@ -36,7 +38,7 @@ export default function ProfilePage({ onNavigate }) {
       const data = await api.upload('/profile/image', formData)
       updateProfile({ profileImage: data.profileImage })
     } catch {
-      alert('프로필 사진 변경에 실패했습니다')
+      toast.error('프로필 사진 변경에 실패했습니다')
     }
     setUploadingImage(false)
   }

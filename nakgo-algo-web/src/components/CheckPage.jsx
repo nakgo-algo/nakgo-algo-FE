@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import api from '../api'
+import { useToast } from '../contexts/ToastContext'
 
 export default function CheckPage() {
+  const toast = useToast()
   const [speciesList, setSpeciesList] = useState([])
   const [fish, setFish] = useState('')
   const [customFish, setCustomFish] = useState('')
@@ -32,12 +34,12 @@ export default function CheckPage() {
   const handleCheck = async () => {
     const selectedFish = showCustomInput ? customFish : fish
     if (!selectedFish) {
-      alert('어종을 선택하거나 입력해 주세요.')
+      toast.warn('어종을 선택하거나 입력해 주세요.')
       return
     }
     const lengthNum = parseFloat(length)
     if (isNaN(lengthNum) || lengthNum <= 0) {
-      alert('올바른 길이를 입력해 주세요. (0cm 초과)')
+      toast.warn('올바른 길이를 입력해 주세요. (0cm 초과)')
       return
     }
 
@@ -59,7 +61,7 @@ export default function CheckPage() {
       if (err.status === 404) {
         setResult({ status: 'unknown', fishName: selectedFish, inputLength: lengthNum })
       } else {
-        alert('확인 중 오류가 발생했습니다.')
+        toast.error('확인 중 오류가 발생했습니다.')
       }
     }
     setChecking(false)

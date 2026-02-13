@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../api'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 
 export default function CommunityPage() {
   const { isLoggedIn } = useAuth()
+  const toast = useToast()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -153,7 +155,7 @@ export default function CommunityPage() {
       <button
         onClick={() => {
           if (!isLoggedIn) {
-            alert('로그인이 필요합니다')
+            toast.warn('로그인이 필요합니다')
             return
           }
           setShowWriteModal(true)
@@ -188,7 +190,7 @@ export default function CommunityPage() {
         <PostDetailModal
           postId={selectedPost}
           onClose={() => setSelectedPost(null)}
-          onDeleted={() => { setSelectedPost(null); fetchPosts() }}
+          onDeleted={() => { setSelectedPost(null); fetchPosts(); toast.success('게시글이 삭제되었습니다') }}
         />
       )}
 
@@ -206,6 +208,7 @@ export default function CommunityPage() {
 }
 
 function WritePostModal({ onClose, onCreated }) {
+  const toast = useToast()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [image, setImage] = useState(null)
@@ -216,7 +219,7 @@ function WritePostModal({ onClose, onCreated }) {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 5 * 1024 * 1024) {
-      alert('이미지 크기는 5MB 이하여야 합니다')
+      toast.warn('이미지 크기는 5MB 이하여야 합니다')
       return
     }
     setImage(file)
@@ -225,7 +228,7 @@ function WritePostModal({ onClose, onCreated }) {
 
   const handleSubmit = async () => {
     if (!title.trim() || !content.trim()) {
-      alert('제목과 내용을 입력해주세요')
+      toast.warn('제목과 내용을 입력해주세요')
       return
     }
     setSubmitting(true)
@@ -237,7 +240,7 @@ function WritePostModal({ onClose, onCreated }) {
       await api.upload('/posts', formData)
       onCreated()
     } catch {
-      alert('게시글 등록에 실패했습니다')
+      toast.error('게시글 등록에 실패했습니다')
     }
     setSubmitting(false)
   }
@@ -322,6 +325,7 @@ const DELETE_REASONS = [
 
 function PostDetailModal({ postId, onClose, onDeleted }) {
   const { isLoggedIn, user } = useAuth()
+  const toast = useToast()
   const isAdmin = user?.isAdmin
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -347,7 +351,7 @@ function PostDetailModal({ postId, onClose, onDeleted }) {
       setPost(prev => ({ ...prev, comments: [...(prev.comments || []), comment] }))
       setCommentText('')
     } catch {
-      alert('댓글 등록에 실패했습니다')
+      toast.error('댓글 등록에 실패했습니다')
     }
     setSubmitting(false)
   }
@@ -365,7 +369,7 @@ function PostDetailModal({ postId, onClose, onDeleted }) {
       await api.delete(`/posts/${postId}`)
       onDeleted?.()
     } catch {
-      alert('삭제에 실패했습니다')
+      toast.error('삭제에 실패했습니다')
       setDeleting(false)
     }
   }
@@ -373,7 +377,7 @@ function PostDetailModal({ postId, onClose, onDeleted }) {
   const handleAdminDelete = async () => {
     const reason = selectedReason === '기타' ? customReason.trim() : selectedReason
     if (!reason) {
-      alert('삭제 사유를 선택해주세요')
+      toast.warn('삭제 사유를 선택해주세요')
       return
     }
     setDeleting(true)
@@ -381,7 +385,7 @@ function PostDetailModal({ postId, onClose, onDeleted }) {
       await api.put(`/posts/${postId}/admin-delete`, { reason })
       onDeleted?.()
     } catch {
-      alert('삭제에 실패했습니다')
+      toast.error('삭제에 실패했습니다')
       setDeleting(false)
     }
   }

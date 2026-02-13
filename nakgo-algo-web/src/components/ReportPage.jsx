@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import api from '../api'
 
 const reportTypes = [
@@ -18,6 +19,7 @@ const statusLabels = {
 
 export default function ReportPage({ onNavigate }) {
   const { isLoggedIn, user } = useAuth()
+  const toast = useToast()
   const isAdmin = user?.isAdmin === true
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [reports, setReports] = useState([])
@@ -29,7 +31,7 @@ export default function ReportPage({ onNavigate }) {
       await api.put(`/reports/${reportId}/status`, { status: newStatus })
       fetchReports()
     } catch {
-      alert('상태 변경에 실패했습니다')
+      toast.error('상태 변경에 실패했습니다')
     }
   }
 
@@ -217,6 +219,7 @@ export default function ReportPage({ onNavigate }) {
 }
 
 function CreateReportModal({ onClose, onCreated, initialLocation }) {
+  const toast = useToast()
   const [type, setType] = useState('')
   const [title, setTitle] = useState('')
   const [location, setLocation] = useState(initialLocation || '')
@@ -225,7 +228,7 @@ function CreateReportModal({ onClose, onCreated, initialLocation }) {
 
   const handleSubmit = async () => {
     if (!type || !title || !location || !description) {
-      alert('모든 항목을 입력해주세요')
+      toast.warn('모든 항목을 입력해주세요')
       return
     }
 
@@ -237,10 +240,10 @@ function CreateReportModal({ onClose, onCreated, initialLocation }) {
         location: location.trim(),
         description: description.trim(),
       })
-      alert('제보해주셔서 감사합니다!\n검토 후 반영하겠습니다.')
+      toast.success('제보해주셔서 감사합니다! 검토 후 반영하겠습니다.')
       onCreated()
     } catch {
-      alert('제보 등록에 실패했습니다')
+      toast.error('제보 등록에 실패했습니다')
     }
     setIsSubmitting(false)
   }
@@ -313,7 +316,7 @@ function CreateReportModal({ onClose, onCreated, initialLocation }) {
                       (pos) => {
                         setLocation(`${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`)
                       },
-                      () => alert('위치를 가져올 수 없습니다')
+                      () => toast.error('위치를 가져올 수 없습니다')
                     )
                   }
                 }}

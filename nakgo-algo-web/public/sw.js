@@ -28,12 +28,13 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
-// Fetch event - Network first, fallback to cache
+// Fetch event - Network first, fallback to cache (GET only)
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Clone the response
         const responseClone = response.clone()
 
         caches.open(CACHE_NAME)

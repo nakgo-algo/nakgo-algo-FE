@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ToastProvider } from "./contexts/ToastContext";
 import MapPage from "./components/MapPage";
 import CheckPage from "./components/CheckPage";
 import RegulationsPage from "./components/RegulationsPage";
@@ -194,7 +195,9 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </AuthProvider>
   );
 }
