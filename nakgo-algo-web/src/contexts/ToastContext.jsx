@@ -32,10 +32,10 @@ export function ToastProvider({ children }) {
           <div
             key={t.id}
             className={`pointer-events-auto px-4 py-3 rounded-xl shadow-lg text-sm font-medium max-w-sm w-full animate-toast-in ${
-              t.type === 'success' ? 'bg-emerald-600 text-white' :
-              t.type === 'error' ? 'bg-red-600 text-white' :
-              t.type === 'warn' ? 'bg-yellow-500 text-black' :
-              'bg-slate-700 text-white'
+              t.type === 'success' ? 'bg-emerald-500/90 text-white border border-emerald-400/20' :
+              t.type === 'error' ? 'bg-red-500/90 text-white border border-red-400/20' :
+              t.type === 'warn' ? 'bg-amber-500/20 text-amber-200 border border-amber-500/30 backdrop-blur-sm' :
+              'bg-slate-700/90 text-white border border-slate-600/30 backdrop-blur-sm'
             }`}
           >
             {t.message}
