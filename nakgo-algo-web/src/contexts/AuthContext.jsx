@@ -7,19 +7,6 @@ const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY || ''
 const KAKAO_REST_KEY = import.meta.env.VITE_KAKAO_REST_KEY || ''
 const REDIRECT_URI = window.location.origin
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
-
-// Render 무료 서버 깨우기 (cold start 대기)
-async function wakeUpServer() {
-  for (let i = 0; i < 3; i++) {
-    try {
-      await fetch(`${API_BASE}/auth/verify`, { signal: AbortSignal.timeout(15000) })
-      return
-    } catch {
-      // 실패해도 계속 시도
-    }
-  }
-}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
@@ -52,9 +39,7 @@ export function AuthProvider({ children }) {
       window.history.replaceState({}, '', window.location.pathname)
 
       try {
-        // Render 무료 서버 깨우기 (cold start 대기)
-        await wakeUpServer()
-        // 서버 준비 완료 후 code 전달 → 백엔드에서 토큰 교환 + JWT 발급
+        // code를 백엔드로 전달 (Netlify 프록시 경유 → CORS 문제 없음)
         const data = await api.post('/auth/kakao', { code, redirectUri: REDIRECT_URI })
         api.setToken(data.token)
         setUser({ ...data.user, provider: 'kakao' })
