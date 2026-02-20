@@ -38,34 +38,13 @@ export function AuthProvider({ children }) {
       window.history.replaceState({}, '', window.location.pathname)
 
       try {
-        // code → access_token 교환
-        const tokenRes = await fetch('https://kauth.kakao.com/oauth/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            grant_type: 'authorization_code',
-            client_id: KAKAO_REST_KEY,
-            redirect_uri: REDIRECT_URI,
-            code,
-          }),
+        // code를 백엔드로 전달 → 백엔드에서 토큰 교환 + JWT 발급
+        const data = await api.post('/auth/kakao', {
+          code,
+          redirectUri: REDIRECT_URI,
         })
-        const tokenData = await tokenRes.json()
-
-        if (tokenData.error) {
-          console.error('[Auth] 카카오 토큰 교환 실패:', tokenData.error, tokenData.error_description)
-          setLoginError(`카카오 인증 실패: ${tokenData.error_description || tokenData.error}`)
-          setIsLoading(false)
-          return
-        }
-
-        if (tokenData.access_token) {
-          // 백엔드에 access_token 전달 → JWT 발급
-          const data = await api.post('/auth/kakao', {
-            accessToken: tokenData.access_token,
-          })
-          api.setToken(data.token)
-          setUser({ ...data.user, provider: 'kakao' })
-        }
+        api.setToken(data.token)
+        setUser({ ...data.user, provider: 'kakao' })
       } catch (err) {
         console.error('[Auth] 카카오 로그인 처리 실패:', err)
         const detail = err?.message || err?.status || JSON.stringify(err)
