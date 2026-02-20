@@ -7,14 +7,16 @@ const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY || ''
 const KAKAO_REST_KEY = import.meta.env.VITE_KAKAO_REST_KEY || ''
 const REDIRECT_URI = window.location.origin
 
-// Render 무료 서버 cold start 대비 재시도
-async function fetchWithRetry(fn, retries = 2, delay = 3000) {
-  for (let i = 0; i <= retries; i++) {
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
+
+// Render 무료 서버 깨우기 (cold start 대기)
+async function wakeUpServer() {
+  for (let i = 0; i < 3; i++) {
     try {
-      return await fn()
-    } catch (err) {
-      if (i === retries || !err?.message?.includes('Failed to fetch')) throw err
-      await new Promise(r => setTimeout(r, delay))
+      await fetch(`${API_BASE}/auth/verify`, { signal: AbortSignal.timeout(15000) })
+      return
+    } catch {
+      // 실패해도 계속 시도
     }
   }
 }
@@ -50,10 +52,10 @@ export function AuthProvider({ children }) {
       window.history.replaceState({}, '', window.location.pathname)
 
       try {
-        // code를 백엔드로 전달 → 백엔드에서 토큰 교환 + JWT 발급
-        const data = await fetchWithRetry(() =>
-          api.post('/auth/kakao', { code, redirectUri: REDIRECT_URI })
-        )
+        // Render 무료 서버 깨우기 (cold start 대기)
+        await wakeUpServer()
+        // 서버 준비 완료 후 code 전달 → 백엔드에서 토큰 교환 + JWT 발급
+        const data = await api.post('/auth/kakao', { code, redirectUri: REDIRECT_URI })
         api.setToken(data.token)
         setUser({ ...data.user, provider: 'kakao' })
       } catch (err) {
@@ -87,8 +89,6 @@ export function AuthProvider({ children }) {
 
   // 카카오 로그인 (리다이렉트 방식)
   const loginWithKakao = () => {
-    // Render 무료 서버 미리 깨우기 (카카오 인증 동안 서버가 준비됨)
-    api.get('/auth/verify').catch(() => {})
     const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_REST_KEY}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code`
     window.location.href = kakaoAuthUrl
   }
