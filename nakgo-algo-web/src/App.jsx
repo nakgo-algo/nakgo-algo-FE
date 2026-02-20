@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { ToastProvider } from "./contexts/ToastContext";
+import { ToastProvider, useToast } from "./contexts/ToastContext";
 import MapPage from "./components/MapPage";
 import CheckPage from "./components/CheckPage";
 import RegulationsPage from "./components/RegulationsPage";
@@ -17,7 +17,8 @@ import ModerationPage from "./components/ModerationPage";
 import api from "./api";
 
 function AppContent() {
-  const { isLoggedIn, isLoading, user } = useAuth();
+  const { isLoggedIn, isLoading, user, loginError } = useAuth();
+  const toast = useToast();
   const [currentPage, setCurrentPage] = useState("map");
   const [locationStatus, setLocationStatus] = useState("pending");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -40,6 +41,11 @@ function AppContent() {
   useEffect(() => {
     fetchUnreadCount();
   }, [currentPage, fetchUnreadCount]);
+
+  // 로그인 에러 표시
+  useEffect(() => {
+    if (loginError) toast.error(loginError);
+  }, [loginError]);
 
   // 주기적 폴링 (30초)
   useEffect(() => {

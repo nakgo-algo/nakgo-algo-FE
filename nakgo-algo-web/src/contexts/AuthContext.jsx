@@ -10,6 +10,7 @@ const REDIRECT_URI = window.location.origin
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [loginError, setLoginError] = useState(null)
 
   // 카카오 SDK 로드 + 리다이렉트 코드 처리
   useEffect(() => {
@@ -50,6 +51,13 @@ export function AuthProvider({ children }) {
         })
         const tokenData = await tokenRes.json()
 
+        if (tokenData.error) {
+          console.error('[Auth] 카카오 토큰 교환 실패:', tokenData.error, tokenData.error_description)
+          setLoginError(`카카오 인증 실패: ${tokenData.error_description || tokenData.error}`)
+          setIsLoading(false)
+          return
+        }
+
         if (tokenData.access_token) {
           // 백엔드에 access_token 전달 → JWT 발급
           const data = await api.post('/auth/kakao', {
@@ -60,6 +68,7 @@ export function AuthProvider({ children }) {
         }
       } catch (err) {
         console.error('[Auth] 카카오 로그인 처리 실패:', err)
+        setLoginError('로그인 처리 중 오류가 발생했습니다.')
       }
       setIsLoading(false)
       return
@@ -132,6 +141,7 @@ export function AuthProvider({ children }) {
         user,
         isLoading,
         isLoggedIn: !!user,
+        loginError,
         loginWithKakao,
         loginDemo,
         logout,
