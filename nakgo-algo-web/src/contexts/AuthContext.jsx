@@ -68,7 +68,8 @@ export function AuthProvider({ children }) {
         }
       } catch (err) {
         console.error('[Auth] 카카오 로그인 처리 실패:', err)
-        setLoginError('로그인 처리 중 오류가 발생했습니다.')
+        const detail = err?.message || err?.status || JSON.stringify(err)
+        setLoginError(`로그인 실패: ${detail}`)
       }
       setIsLoading(false)
       return
