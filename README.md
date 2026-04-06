@@ -4,7 +4,7 @@
 
 ## 기술 스택
 - React + Vite
-- Tailwind CSS
+- Tailwind CSS''
 - Kakao Map API
 - TensorFlow.js (MobileNet)
 
